@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#eee8dc">
+    <meta name="description" content="Sketch a pottery profile, revolve it in 3D, and export a printable former or vessel.">
+    <title>Formwheel — pottery forms from a single curve</title>
+    <link rel="stylesheet" href="styles.css?v=7">
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Skip to workspace</a>
+
+    <header class="masthead">
+      <a class="wordmark" href="#" aria-label="Formwheel home">
+        <span class="wordmark-mark" aria-hidden="true"></span>
+        <span>Formwheel</span>
+      </a>
+      <nav class="mode-switch" aria-label="Workspace mode">
+        <button class="mode-button is-active" data-mode="form" type="button">Form</button>
+        <button class="mode-button" data-mode="mold" type="button">Mold kit</button>
+      </nav>
+      <p class="tagline">A quiet place to turn a curve into clay.</p>
+      <div class="header-actions">
+        <label class="design-name">
+          <span class="sr-only">Design name</span>
+          <input id="design-name" value="Untitled vessel" maxlength="48" autocomplete="off">
+        </label>
+        <button class="button button-quiet" id="reset-design" type="button">Start fresh</button>
+      </div>
+    </header>
+
+    <main id="workspace" class="workspace">
+      <section class="profile-bench" aria-labelledby="profile-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 · Profile</p>
+            <h1 id="profile-title">Draw the silhouette</h1>
+          </div>
+          <div class="history-actions" aria-label="Edit history">
+            <button class="icon-button" id="undo" type="button" aria-label="Undo profile change" title="Undo">↶</button>
+            <button class="icon-button" id="redo" type="button" aria-label="Redo profile change" title="Redo">↷</button>
+          </div>
+        </div>
+
+        <div class="preset-row" aria-label="Profile presets">
+          <button class="preset is-active" data-preset="bowl" type="button">Bowl</button>
+          <button class="preset" data-preset="cup" type="button">Cup</button>
+          <button class="preset" data-preset="vase" type="button">Vase</button>
+          <button class="preset" data-preset="urn" type="button">Urn</button>
+        </div>
+
+        <div class="profile-frame">
+          <canvas id="profile-canvas" aria-label="Editable half-profile. Click to add a point, drag points to shape the vessel, and double-click a point to remove it." tabindex="0"></canvas>
+          <div class="axis-label" aria-hidden="true">wheel axis</div>
+          <button class="axis-extend axis-extend-x" id="extend-x" type="button" aria-label="Extend radius axis by 10 millimeters">+10 <span>mm</span></button>
+          <button class="axis-extend axis-extend-y" id="extend-y" type="button" aria-label="Extend height axis by 10 millimeters">+10 <span>mm</span></button>
+          <div class="point-nudger" id="point-nudger" hidden aria-label="Move selected profile point">
+            <div class="point-nudger-heading"><strong id="selected-point-label">Point</strong><span>nudge in mm</span></div>
+            <div class="nudge-axis" aria-label="Horizontal movement">
+              <b>X</b>
+              <button type="button" data-nudge-r="-10" aria-label="Move point left 10 millimeters">−10</button>
+              <button type="button" data-nudge-r="-1" aria-label="Move point left 1 millimeter">←</button>
+              <button type="button" data-nudge-r="1" aria-label="Move point right 1 millimeter">→</button>
+              <button type="button" data-nudge-r="10" aria-label="Move point right 10 millimeters">+10</button>
+            </div>
+            <div class="nudge-axis" aria-label="Vertical movement">
+              <b>Y</b>
+              <button type="button" data-nudge-z="-10" aria-label="Move point down 10 millimeters">−10</button>
+              <button type="button" data-nudge-z="-1" aria-label="Move point down 1 millimeter">↓</button>
+              <button type="button" data-nudge-z="1" aria-label="Move point up 1 millimeter">↑</button>
+              <button type="button" data-nudge-z="10" aria-label="Move point up 10 millimeters">+10</button>
+            </div>
+          </div>
+          <div class="profile-instructions">
+            <span>Click to add</span>
+            <span>Select to nudge</span>
+            <span>Double-click to remove</span>
+          </div>
+        </div>
+
+        <div class="dimension-pair">
+          <label class="field">
+            <span>Final height</span>
+            <span class="input-with-unit"><input id="height" type="number" min="30" max="500" step="1"><b>mm</b></span>
+          </label>
+          <label class="field">
+            <span>Final diameter</span>
+            <span class="input-with-unit"><input id="diameter" type="number" min="20" max="500" step="1"><b>mm</b></span>
+          </label>
+        </div>
+
+        <details class="advanced-profile">
+          <summary>Profile files</summary>
+          <div class="file-actions">
+            <button class="text-button" id="export-profile" type="button">Download editable profile</button>
+            <label class="text-button file-label">
+              Open profile
+              <input id="import-profile" type="file" accept="application/json,.json">
+            </label>
+            <button class="text-button" id="export-svg" type="button">Download profile SVG</button>
+          </div>
+        </details>
+      </section>
+
+      <section class="turntable" aria-labelledby="preview-title">
+        <div class="stage-heading">
+          <div>
+            <p class="eyebrow">02 · Form</p>
+            <h2 id="preview-title">Turn the curve</h2>
+          </div>
+          <div class="view-switch" role="group" aria-label="Preview scale">
+            <button class="view-option is-active" data-view="fired" type="button">Final piece</button>
+            <button class="view-option" data-view="former" type="button">Print former</button>
+          </div>
+        </div>
+
+        <div class="stage-wrap">
+          <canvas id="wheel-underlay" aria-hidden="true"></canvas>
+          <canvas id="gl-canvas" aria-label="Interactive 3D preview of the revolved pottery form"></canvas>
+          <div class="wheel-visual" id="wheel-visual" hidden aria-hidden="true"></div>
+          <canvas id="stage-overlay" aria-hidden="true"></canvas>
+          <div class="stage-note">Drag to orbit · scroll to zoom</div>
+          <button class="spin-control is-on" id="spin-control" type="button" aria-pressed="true">
+            <span class="spin-dot" aria-hidden="true"></span>
+            Wheel turning
+          </button>
+          <div class="wheel-preview-control">
+            <label class="compact-check"><input id="show-wheel" type="checkbox"><span>Place on wheel</span></label>
+            <label class="wheel-size" id="wheel-size-field" hidden><span>Ø</span><input id="wheel-diameter" type="number" min="120" max="800" step="10" value="320"><b>mm</b></label>
+          </div>
+          <div class="scale-stamp" id="scale-stamp">Fired size · 1:1</div>
+        </div>
+
+        <div class="readout" aria-live="polite">
+          <div>
+            <span>Height</span>
+            <strong id="metric-height">—</strong>
+          </div>
+          <div>
+            <span>Diameter</span>
+            <strong id="metric-diameter">—</strong>
+          </div>
+          <div>
+            <span>Capacity</span>
+            <strong id="metric-capacity">—</strong>
+          </div>
+          <div>
+            <span>Print fit</span>
+            <strong id="metric-fit">—</strong>
+          </div>
+        </div>
+      </section>
+
+      <aside class="making-notes" aria-labelledby="making-title">
+        <div class="section-heading notes-heading">
+          <div>
+            <p class="eyebrow">03 · Make</p>
+            <h2 id="making-title">Prepare the former</h2>
+          </div>
+          <span class="save-state" id="save-state">Saved locally</span>
+        </div>
+
+        <div class="mold-status" id="mold-status" role="status">
+          <span class="status-mark" aria-hidden="true">✓</span>
+          <div>
+            <strong>Single-pull profile</strong>
+            <p>This former can release upward from a one-piece plaster mold.</p>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <label class="field field-wide">
+            <span>Clay shrinkage</span>
+            <span class="input-with-unit"><input id="shrinkage" type="number" min="0" max="30" step="0.1" value="12"><b>%</b></span>
+            <small>Measured from wet casting to final firing.</small>
+          </label>
+
+          <div class="dimension-pair">
+            <label class="field">
+              <span>Vessel wall</span>
+              <span class="input-with-unit"><input id="wall" type="number" min="1" max="20" step="0.5" value="3"><b>mm</b></span>
+            </label>
+            <label class="field">
+              <span>Base</span>
+              <span class="input-with-unit"><input id="base" type="number" min="1" max="30" step="0.5" value="5"><b>mm</b></span>
+            </label>
+          </div>
+        </div>
+
+        <details class="printer-settings">
+          <summary>Printer build volume</summary>
+          <div class="build-volume">
+            <label class="mini-field"><span>Width</span><input id="plate-width" type="number" min="50" max="1000" value="256"><b>mm</b></label>
+            <label class="mini-field"><span>Depth</span><input id="plate-depth" type="number" min="50" max="1000" value="256"><b>mm</b></label>
+            <label class="mini-field"><span>Height</span><input id="plate-height" type="number" min="50" max="1000" value="256"><b>mm</b></label>
+          </div>
+        </details>
+
+        <div class="former-summary">
+          <span>Printed former size</span>
+          <strong id="former-size">—</strong>
+          <small id="scale-factor">—</small>
+        </div>
+
+        <div class="export-actions">
+          <button class="button button-primary" id="export-former" type="button">
+            <span>Download former STL</span>
+            <small>Positive form for casting plaster</small>
+          </button>
+          <button class="button button-secondary" id="export-vessel" type="button">
+            <span>Download vessel STL</span>
+            <small>Hollow form for direct printing</small>
+          </button>
+        </div>
+
+        <p class="making-footnote">The former export includes shrinkage compensation. Smooth and seal the print, apply an appropriate release agent, then pour plaster around it. Profiles marked as undercut need a split mold.</p>
+      </aside>
+    </main>
+
+    <main id="mold-workspace" class="workspace mold-workspace" hidden>
+      <section class="mold-source-bench" aria-labelledby="mold-source-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 · Source</p>
+            <h1 id="mold-source-title">Choose the form</h1>
+          </div>
+        </div>
+
+        <div class="source-switch" role="group" aria-label="Mold source">
+          <button class="source-option is-active" data-source="current" type="button">Current form</button>
+          <button class="source-option" data-source="upload" type="button">Upload STL</button>
+        </div>
+
+        <div class="source-current" id="source-current">
+          <div class="source-illustration" aria-hidden="true">
+            <span class="source-vessel"></span>
+            <span class="source-arrow">→</span>
+            <span class="source-block"></span>
+          </div>
+          <strong id="mold-source-name">Untitled vessel</strong>
+          <p>The current form is copied at its shrinkage-compensated former size.</p>
+          <button class="button button-secondary source-copy" id="copy-current-form" type="button">Refresh from Form mode</button>
+        </div>
+
+        <label class="stl-drop" id="stl-drop" hidden>
+          <input id="mold-stl-input" type="file" accept="model/stl,.stl">
+          <span class="drop-mark" aria-hidden="true">STL</span>
+          <strong>Drop a watertight STL</strong>
+          <small>or choose a file · maximum 50 MB</small>
+        </label>
+
+        <div class="source-facts" aria-live="polite">
+          <div><span>Source size</span><strong id="source-size">—</strong></div>
+          <div><span>Triangles</span><strong id="source-triangles">—</strong></div>
+          <div><span>Compensation</span><strong id="source-compensation">—</strong></div>
+        </div>
+
+        <label class="field field-wide upload-shrinkage" id="upload-shrinkage-field" hidden>
+          <span>Added clay shrinkage</span>
+          <span class="input-with-unit"><input id="upload-shrinkage" type="number" min="0" max="30" step="0.1" value="0"><b>%</b></span>
+          <small>Leave at zero if the uploaded STL is already compensated.</small>
+        </label>
+
+        <div class="mold-method">
+          <span class="setting-label">Plaster workflow</span>
+          <div class="method-options" role="group" aria-label="Plaster mold workflow">
+            <button class="method-option is-active" data-method="single" type="button">
+              <strong>One-piece</strong><small>Clean upward pull</small>
+            </button>
+            <button class="method-option" data-method="split" type="button">
+              <strong>Split plaster</strong><small>Clay parting bed</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="source-guidance" id="source-guidance" role="status">
+          <span class="status-mark" aria-hidden="true">↓</span>
+          <div><strong>Pour around the former</strong><p>The inner former includes a slip well; the close-fitting case controls the plaster outside.</p></div>
+        </div>
+      </section>
+
+      <section class="turntable mold-turntable" aria-labelledby="mold-preview-title">
+        <div class="stage-heading">
+          <div>
+            <p class="eyebrow">02 · Tooling</p>
+            <h2 id="mold-preview-title">Assemble the case mold</h2>
+          </div>
+          <div class="view-switch" role="group" aria-label="Mold preview arrangement">
+            <button class="view-option mold-view-option is-active" data-mold-view="assembled" type="button">Cutaway</button>
+            <button class="view-option mold-view-option" data-mold-view="exploded" type="button">Exploded</button>
+          </div>
+        </div>
+
+        <div class="stage-wrap mold-stage-wrap">
+          <canvas id="mold-canvas" aria-label="Interactive 3D preview of the printable mold-making kit"></canvas>
+          <canvas id="mold-overlay" aria-hidden="true"></canvas>
+          <div class="mold-empty" id="mold-empty" hidden><strong>No form loaded</strong><span>Upload an STL or return to the current form.</span></div>
+          <div class="stage-note">Drag to orbit · scroll to zoom</div>
+          <div class="mold-orientation-stamp">Case system · plaster pour</div>
+        </div>
+
+        <div class="part-legend" aria-label="Mold kit parts">
+          <span><i class="legend-former"></i>Inner former + slip well</span>
+          <span><i class="legend-cottle"></i>Split outer case</span>
+          <span><i class="legend-base"></i>Bottom ring + natches</span>
+        </div>
+
+        <div class="readout mold-readout" aria-live="polite">
+          <div><span>Outer box</span><strong id="mold-outer-size">—</strong></div>
+          <div><span>Plaster</span><strong id="plaster-volume">—</strong></div>
+          <div><span>Largest part</span><strong id="largest-part">—</strong></div>
+          <div><span>Print fit</span><strong id="mold-print-fit">—</strong></div>
+        </div>
+      </section>
+
+      <aside class="making-notes mold-controls" aria-labelledby="mold-controls-title">
+        <div class="section-heading notes-heading">
+          <div>
+            <p class="eyebrow">03 · Print</p>
+            <h2 id="mold-controls-title">Size the tooling</h2>
+          </div>
+          <span class="save-state">Live</span>
+        </div>
+
+        <div class="mold-status" id="kit-status" role="status">
+          <span class="status-mark" aria-hidden="true">✓</span>
+          <div><strong>Kit ready</strong><p>Four printable parts sized from the current former.</p></div>
+        </div>
+
+        <div class="settings-group mold-settings">
+          <div class="dimension-pair">
+            <label class="field">
+              <span>Plaster wall</span>
+              <span class="input-with-unit"><input id="plaster-wall" type="number" min="12" max="80" step="1" value="25"><b>mm</b></span>
+            </label>
+            <label class="field">
+              <span>Plaster base</span>
+              <span class="input-with-unit"><input id="plaster-base" type="number" min="12" max="80" step="1" value="25"><b>mm</b></span>
+            </label>
+          </div>
+          <div class="dimension-pair">
+            <label class="field">
+              <span>Case wall</span>
+              <span class="input-with-unit"><input id="case-wall" type="number" min="1.2" max="6" step="0.2" value="2.4"><b>mm</b></span>
+            </label>
+            <label class="field">
+              <span>Bottom ring</span>
+              <span class="input-with-unit"><input id="mold-base-thickness" type="number" min="2" max="10" step="0.5" value="4"><b>mm</b></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="kit-parts">
+          <div class="kit-part"><div><strong>Inner former</strong><small id="former-part-size">—</small></div><button class="text-button" id="download-kit-former" type="button">Download STL</button></div>
+          <div class="kit-part"><div><strong>Left case</strong><small id="left-part-size">—</small></div><button class="text-button" id="download-case-left" type="button">Download STL</button></div>
+          <div class="kit-part"><div><strong>Right case</strong><small id="right-part-size">—</small></div><button class="text-button" id="download-case-right" type="button">Download STL</button></div>
+          <div class="kit-part"><div><strong>Bottom ring</strong><small id="base-part-size">—</small></div><button class="text-button" id="download-mold-base" type="button">Download STL</button></div>
+          <div class="kit-part" id="natch-part"><div><strong>Registration natches</strong><small id="natch-part-size">Four rounded keys for a split plaster mold</small></div><button class="text-button" id="download-natches" type="button">Download STL</button></div>
+        </div>
+
+        <div class="export-actions mold-export-actions">
+          <button class="button button-primary" id="download-build-sheet" type="button">
+            <span>Download build sheet</span>
+            <small>Dimensions, volume, and casting sequence</small>
+          </button>
+        </div>
+
+        <details class="casting-sequence" open>
+          <summary>Casting sequence</summary>
+          <ol id="casting-steps">
+            <li>Print and finish the inner former; seal every layer line.</li>
+            <li>Seat it in the bottom ring, then assemble the gasketed outer case.</li>
+            <li>Apply release, pour pottery plaster, and let it set completely.</li>
+            <li>Remove the printed tooling, flip the plaster block, dry it, then slip cast.</li>
+          </ol>
+        </details>
+
+        <p class="making-footnote">The printed case controls the plaster outside; the inner former creates the casting cavity and slip well. Uploaded STL files default to a split workflow because arbitrary parting surfaces and undercuts still require a mold-maker’s judgment.</p>
+      </aside>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="geometry.js?v=7"></script>
+    <script src="app.js?v=7"></script>
+    <script src="mold-geometry.js?v=7"></script>
+    <script src="mold.js?v=7"></script>
+  </body>
+</html>

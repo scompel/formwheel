@@ -1,0 +1,11 @@
+{
+  "name": "formwheel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline pottery profile visualizer and printable former generator",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test tests/*.test.js",
+    "serve": "python3 -m http.server 4173"
+  }
+}
